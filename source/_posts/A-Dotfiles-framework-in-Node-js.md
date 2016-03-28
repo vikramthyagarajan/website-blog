@@ -12,27 +12,25 @@ tags:
   - development
   - config
 ---
+NOTE: If you want to read about my implementation of this idea, check out part 2 of this post at (). I detail my thought process and decisions behind the same in this post.
+
 ## Introduction
-Configuration is a natural evolution of my development cycle. Initially I make software to fit a purpose. Slowly, I find ways to reuse the software outside this small sandbox. But invariably as the software evolves, so does its ability to be configured. And slowly my coding style and the way I write software has changed to think of configuration from the ground up. I've started writing code with the thought of its extensibility, far more that I used to before. And this is why I adhere more to the "Configuration over Convention" philosophy of frameworks.
+Configuration is a natural evolution of my development cycle. Initially I make software to fit a purpose, and slowly find ways to reuse it outside its sandbox. Invariably as the software evolves, it becomes configurable and extensible.
 
-Also I am a total productivity freak. I love tweaking my workflow to make my development process more efficient. Which is probably why I love dotfiles.
-
-But a natural part of maintaining dotfiles, or any configuration for that matter, is its storage. Anyone who has had to work on a different computer knows the pain of not having your sweet tools and customisations with you. And manually copy pasting these configs are a pain. It's almost harder than starting from scratch. Almost. So version control is necessary in the maintainence of dotfiles. 
+Dotfiles are a way to keep track of tweaks that you make to your application, to enhance your workflow and productivity. And if you're like me, you're looking to maintain these in a way that seems intuitive and simple. We should learn from a field that has solved this problem so well, that it is almost second nature - Web Development
 
 ## The sane way to maintain configurations
+So how do I go about storing these? Should I just copy all of them and dump them in Version Control? Should I add in a file that contains all the commands I want to run? Should I break them up into multiple files? What about installation, should I manually do it outside the dotfiles repo? Where do I start?
 
-I wrestled with the way I'd maintain this in version control. I think my experience in Node.js server development helped me in this regard. The only sane way to deal with server configuration has always been through JSON files. Given the first class support for JSON, maintaining configuration through JSON is trivial. 
-
-The main point being that there should be a logical separation between the configuration and the code that runs it. The only thing a webserver should be concerned with is running the server, not worrying about what port it runs on. So the code running the server should be separated from the part where the configuration of the server is described. This is web development 101. Now how do we use this theory to maintain our dotfiles?
+In web development, the only sane way to deal with server configuration is to keep a logical separation between two. The code that describes the server (usually in JSON files)is separate from server code itself. This is web development 101. So how do we use this theory to maintain our dotfiles?
 
 ## The drawbacks of current dotfile managers
-
-Bash is a good scripting languages, but maintaining configurations is unintuitive and hard. Why write
+Bash is a good scripting language, but maintaining configurations with it is unintuitive and messy.
 {% codeblock Symlinking in code lang:bash %}
   ln -s ~/.vimrc ~/programs/dotfiles/vim/config
 {% endcodeblock %}
-when you would rather write
-{% codeblock Symlinking by configuration lang:javascript %}
+is more complex to understand than
+{% codeblock Symlinking in JSON lang:javascript %}
 {
   "symlink": {
     "source": "~/.vimrc",
@@ -41,14 +39,26 @@ when you would rather write
 }
 {% endcodeblock %}
 
-The closest dotfile tool that I came across that helps with this is DotBot (https://github.com/anishathalye/dotbot). However, it fails in my other requirement of a dotfile manager. Which is -
+The closest dotfile tool that I came across that understands this is DotBot(https://github.com/anishathalye/dotbot). However, it fails in my other requirement -
 
 ## Dotfiles are not just about configuration
+A Dotfile is the state of an application. Your application went through an evolution. It was installed, initialized, run and tweaked (massively). In order to get to the current state of the application, all of these actions must be done. So your dotfiles should describe how the app was installed, initialized and then configured.
 
-Your dotfiles are not configurations floating in the wind. Your dotfiles are the states of applications that you store. Your applications have gone through an evolution. They were installed, initialized, run and then tweaked (massively). In order to get to the state of the application as it is now, all of these actions must be. So your dotfiles should describe how the app was installed, initialized and then configured.
+I would like to think of my dotfiles as a set of modules. And each module has a lifecycle. It installs, initializes and configures itself, which is what I call bootstrapping. This way I get finegrained control over modules, and can bootstrap a specific module instead of all at once. Also, if I have many modules and configs, I can choose which ones to bootstrap and dependency management becomes a breeze.
 
-I would like to think of my dotfiles as a set of modules. And each module has a lifecycle. It installs, initializes and configures itself, which is what I call bootstrapping. This way I get finegrained control over modules, and can bootstrap a specific module instead of all at once. This way if I have many modules and configs, I can choose which ones to bootstrap and dependency management becomes a breeze.
-
-## Why Node.js
-
-Node is my preffered tool when it the requirement has anything to do with lifecycles or events. It is also my guilty pleasure runtime and I look for any excuse to use it
+## My ideal application specific dotfile
+{% codeblock Vim dotfile conf lang:javscript%}
+{
+  "install": "sudo apt-get install vim", //inline bash script in string form, or name of file in the module directory which is a bash script
+  "initialize": "mv ~/.vimrc ~/backup", //inline or filename of bash script which runs after installation and before config files are moved
+  "configure": "configure.sh", //inline or bash filename. Run after config files are symlinked
+  "config": {
+    "global": {
+      "path": "$HOME/.config" //sets the global path option for the config folder. This means all files in config will by symlinked at this new path
+    },
+    "filename/foldername": {
+      "path": "$HOME/.config/vim" //file or folder level options within the config folder. These options will apply for filename/foldername and overrides the global
+    }
+  }
+}
+{% endcodeblock %}
