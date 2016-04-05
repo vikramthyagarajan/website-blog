@@ -12,7 +12,6 @@ tags:
   - development
   - config
 ---
-NOTE: If you want to read about my implementation of this idea, check out part 2 of this post at (). I detail my thought process and decisions behind the same in this post.
 
 ## Introduction
 Configuration is a natural evolution of my development cycle. Initially I make software to fit a purpose, and slowly find ways to reuse it outside its sandbox. Invariably as the software evolves, it becomes configurable and extensible.
@@ -47,7 +46,7 @@ A Dotfile is the state of an application. Your application went through an evolu
 I would like to think of my dotfiles as a set of modules. And each module has a lifecycle. It installs, initializes and configures itself, which is what I call bootstrapping. This way I get finegrained control over modules, and can bootstrap a specific module instead of all at once. Also, if I have many modules and configs, I can choose which ones to bootstrap and dependency management becomes a breeze.
 
 ## My ideal application specific dotfile
-{% codeblock Vim dotfile conf lang:javscript%}
+{% codeblock Vim dotfile conf lang:javascript%}
 {
   "install": "sudo apt-get install vim", //inline bash script in string form, or name of file in the module directory which is a bash script
   "initialize": "mv ~/.vimrc ~/backup", //inline or filename of bash script which runs after installation and before config files are moved
